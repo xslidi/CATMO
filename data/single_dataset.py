@@ -1,5 +1,5 @@
 import os.path
-from data.base_dataset import BaseDataset, get_transform, get_norm, adjust2test, _resize, exposure_split, imread, _luminance
+from data.base_dataset import BaseDataset, get_transform, get_norm, adjust2test, _resize, imread, _luminance
 from data.image_folder import make_dataset
 import skimage
 import torchvision.transforms as transforms
@@ -36,15 +36,6 @@ class SingleDataset(BaseDataset):
         A_img = adjust2test(A_img)
         A_img_norm = get_norm(A_img, data_norm=self.opt.data_norm)
 
-        if self.opt.exposure:
-            over_exposure, under_exposure, normal_exposure = exposure_split(A_img)
-            over_exposure_norm = get_norm(over_exposure, 'uni')
-            under_exposure_norm = get_norm(under_exposure, 'log_norm')
-            normal_exposure_norm = get_norm(normal_exposure, 'uni')
-            A_o = self.ttensor(over_exposure_norm)
-            A_u = self.ttensor(under_exposure_norm)
-            A_n = self.ttensor(normal_exposure_norm)
-
         A = self.ttensor(A_img_norm)
         A_origin = self.ttensor(A_img)  
         
@@ -58,9 +49,6 @@ class SingleDataset(BaseDataset):
         #     A = tmp.unsqueeze(0)
 
         out_dict = {'A': A, 'A_paths': A_path, 'A_origin': A_origin}
-        
-        if self.opt.exposure:
-            out_dict.update({'A_o': A_o, 'A_u': A_u, 'A_n': A_n})
             
         return out_dict
 
