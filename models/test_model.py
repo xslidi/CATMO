@@ -35,7 +35,7 @@ class TestModel(BaseModel):
         self.model_names = ['G' + opt.model_suffix]
 
         self.netG = networks.define_G(opt.input_nc, opt.output_nc, opt.ngf, opt.netG,
-                                      opt.norm_g, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids, True, opt.spectral_norm, opt.attention)
+                                      opt.norm_g, not opt.no_dropout, opt.init_type, opt.init_gain, self.gpu_ids, True, opt.spectral_norm)
 
         # assigns the model to self.netG_[suffix] so that it can be loaded
         # please see BaseModel.load_networks
@@ -46,24 +46,14 @@ class TestModel(BaseModel):
         self.real_A = input['A'].to(self.device)
         self.image_paths = input['A_paths']
         self.origin_A = input['A_origin'].to(self.device)
-        if self.opt.exposure:
-            self.real_A_over_exposure = input['A_o'].to(self.device)
-            self.real_A_under_exposure = input['A_u'].to(self.device)
-            self.real_A_normal_exposure = input['A_n'].to(self.device)
 
     def forward(self):
-        if self.opt.exposure:
-            if self.opt.amp:
-                with torch.cuda.amp.autocast():
-                    self.fake_B = self.netG(self.real_A_over_exposure, self.real_A_normal_exposure, self.real_A_under_exposure)
-            else:
-                self.fake_B = self.netG(self.real_A_over_exposure, self.real_A_normal_exposure, self.real_A_under_exposure)
-        else:
-            if self.opt.amp:
-                with torch.cuda.amp.autocast():
-                    self.fake_B = self.netG(self.real_A)
-            else:
+
+        if self.opt.amp:
+            with torch.cuda.amp.autocast():
                 self.fake_B = self.netG(self.real_A)
+        else:
+            self.fake_B = self.netG(self.real_A)
         if not self.opt.lum and not self.opt.hsv:
             revise_img = ReviseImage(self.fake_B, self.origin_A)
             revise_img.saved_batches()
